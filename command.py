@@ -58,7 +58,7 @@ class ActionRoutes:
     """
 
     @staticmethod
-    def build(self, params):
+    def build(params):
         """Assembles the appropriate builder, which is then invoked to compile
            and link all artifacts in the given package. If no builder is
            specified, we default to g++/MSVC (in that order). If no config is
@@ -73,7 +73,7 @@ class ActionRoutes:
             if g.isExists():
                 b = g
             elif m.isExists():
-                m = g
+                b = m
             else:
                 raise Exception('Unable to resolve a supported Builder')
         p = packages.Package(params.target)
@@ -83,6 +83,13 @@ class ActionRoutes:
         else:
             c = configs.BuildConfig()
         b.build(p, c)
+
+    @staticmethod
+    def clean(params):
+        """Invokes the *clean* method on the given package
+        """
+        p = packages.Package(params.target)
+        p.cleanPaths()
 
 def resolveModel(modelPath):
     """Given a model path (module + class name), uses *importlib* in an attmept

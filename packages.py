@@ -30,21 +30,27 @@ class Package(object):
            static library for this package. Does NOT include .cpp files that
            begin with "main_" or "test_".
         """
-        pass
+        allFiles = os.listdir(self.path)
+        srcFiles = [f for f in allFiles if f.endswith('.cpp') and not f.startswith('main')]
+        return srcFiles
 
     def getMain(self):
         """Returns a list of all main .cpp source files in this package folder.
            These are all .cpp files that begin with "main_", as well as
            "main.cpp" (if it exists).
         """
-        pass
+        allFiles = os.listdir(self.path)
+        mainFiles = [f for f in allFiles if f.endswith('.cpp') and f.startswith('main')]
+        return mainFiles
 
     def getTest(self):
         """Returns a list of all test .cpp source files in this package folder.
            These are all .cpp files that begin with "test_", as well as
            "test.cpp" (if it exists).
         """
-        pass
+        allFiles = os.listdir(self.path)
+        testFiles = [f for f in allFiles if f.endswith('.cpp') and f.startswith('test')]
+        return testFiles
 
     def getOutName(self, file):
         """Returns the output name of the given file, which can have one of
@@ -67,9 +73,14 @@ class Package(object):
 
     def cleanPaths(self):
         """Removes all entries from the intermediate and output folders *obj*
-           and *bin*, respectively.
+           and *bin*, respectively--eventually. For now, just removes files
+           with the extensions .o, .out, .obj, .exe
         """
-        pass
+        allFiles = os.listdir(self.path)
+        tgtExts = ['.o', '.out', '.obj', '.exe']
+        for f in allFiles:
+            if any([f.endswith(ext) for ext in tgtExts]):
+                os.remove(f)
 
     def getObjPath(self):
         """Returns the absolute path to the *obj* folder in the package.

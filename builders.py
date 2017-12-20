@@ -35,12 +35,14 @@ class Builder(object):
         self.link_args = []
 
     def compile(self, target):
-        """Defines compile process using *Builder* exe and flag properties
+        """Defines compile process using *Builder* exe and flag properties.
+           Returns the absolute path of the object file produced.
         """
         stdout, stderr = safe_call(self.compile_exe, self.compile_args + [target])
         if stderr:
             raise Exception('Encountered error at compile time: "%s"' % stderr)
         print(stdout)
+        return self.translateSource(target)
 
     def link(self, targets):
         """Defines link process using *Builder* exe and flag properties
@@ -56,7 +58,18 @@ class Builder(object):
            together for each build product, in accordance with the specified
            build configuration.
         """
-        pass
+        src = package.getSource()
+        main = package.getMain()
+        test = package.getTest()
+        obj = []
+        for s in src:
+            obj.append(self.compile(s))
+        for m in main:
+            out = self.compile(m)
+            self.link([out] + obj)
+        for t in test:
+            out = self.compile(t)
+            self.link([out] + obj)
 
     def isExists(self):
         """Returns true if both *compile_exe* and *link_exe* can be resolved on
@@ -68,6 +81,12 @@ class Builder(object):
             return True
         except NO_EXE_ERROR:
             return False
+
+    def translateSource(self, srcFile):
+        """Abstract method for translating a source file name into an object
+           file name.
+        """
+        raise NotImplementedError()
 
 class MSVC(Builder):
     """Extends *Builder* to implement an interface to MSVC's command-line
@@ -83,6 +102,11 @@ class MSVC(Builder):
         self.compile_args = ['/EHsc', '/nologo', '/c']
         self.link_args = ['/nologo']
 
+    def translateSource(self, srcFile):
+        """MSVC produces ".obj" files for each ".cpp"
+        """
+        return srcFile.replace(".cpp", ".obj")
+
 class GCC(Builder):
     """Extends *Builder* to implement an interface to g++
     """
@@ -95,3 +119,9 @@ class GCC(Builder):
         self.link_exe = 'g++'
         self.compile_args = ['-c']
         self.link_args = []
+
+    def translateSource(self, srcFile):
+        """G++ produces ".o" files for each ".cpp"
+        """
+        return srcFile.replace(".cpp", ".o")
+
