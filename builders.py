@@ -3,7 +3,13 @@
    products from a specific package and build configuration object.
 """
 
+import sys
 import subprocess
+
+if sys.version_info.major == 2:
+    NO_EXE_ERROR = OSError
+else:
+    NO_EXE_ERROR = FileNotFoundError
 
 def safe_call(cmd, args=None):
     """Utilizes *subprocess.Popen* to safely call an external program.
@@ -51,6 +57,17 @@ class Builder(object):
            build configuration.
         """
         pass
+
+    def isExists(self):
+        """Returns true if both *compile_exe* and *link_exe* can be resolved on
+           this platform.
+        """
+        try:
+            pc = subprocess.Popen([self.compile_exe], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            pl = subprocess.Popen([self.link_exe], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except NO_EXE_ERROR:
+            return False
 
 class MSVC(Builder):
     """Extends *Builder* to implement an interface to MSVC's command-line
