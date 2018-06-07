@@ -1,0 +1,14 @@
+epic package dependencies:
+ * cite git URL
+ * check out to local package repository
+ * verify semver constraint (TODO)
+ * include package path
+ * build library for configuration
+ * link against library
+
+e.g., if local package repository EPIC_REPO=C:\Projects, for dependency glew:
+{ "dependencies": { "gitlab.corp.exoanalytic.com:sdl/glew": ">= 2.0" } }
+ * checked out to C:\Projects\com.exoanalytic.corp.gitlab.sdl.glew\2.1.0
+ * include flag (MSVC: /I) to that path [glew]
+ * library built to / link against from [glew]/lib/[arch]/[cfg]/glew.lib?
+ * static only, or support .dll too?

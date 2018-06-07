@@ -13,6 +13,7 @@ class MSVC(builders.Builder):
         """
         self.arch = ""
         self.config = ""
+        self.defines = {}
 
     def exists(self):
         """
@@ -24,7 +25,12 @@ class MSVC(builders.Builder):
            path to a source file and absolute path to desired object file
            resulting from compilation.
         """
-        p = subprocess.Popen(["cl", "/c", "/Fo"+objPath, "/nologo", srcPath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = ["cl"]
+        opts = ["/c", "/Fo" + objPath, "/nologo"]
+        for k, v in self.defines.items():
+            opts.append("/D" + k) # valueless only for now
+        tgts = [srcPath]
+        p = subprocess.Popen(cmd + opts + tgts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if len(out) < 0 or len(err) < 0:
             # can process/parse output/error for future extraction
@@ -35,7 +41,10 @@ class MSVC(builders.Builder):
         """Links object files into a single static library. Returns result of
            link operation (True or False).
         """
-        p = subprocess.Popen(["lib", "/nologo", "/OUT:"+libPath] + objPaths, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = ["lib"]
+        opts = ["/nologo", "/OUT:" + libPath]
+        tgts = objPaths
+        p = subprocess.Popen(cmd + opts + tgts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if len(out) < 0 or len(err) < 0:
             # can process/parse output/error for future extraction
@@ -47,7 +56,10 @@ class MSVC(builders.Builder):
            files can include static libraries. Returns result of link operation
            (True or False).
         """
-        p = subprocess.Popen(["link", "/nologo", "/OUT:"+exePath] + objPaths, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = ["link"]
+        opts = ["/nologo", "/OUT:" + exePath]
+        tgts = objPaths
+        p = subprocess.Popen(cmd + opts + tgts, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if len(out) < 0 or len(err) < 0:
             # can process/parse output/error for future extraction
