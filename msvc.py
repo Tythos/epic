@@ -19,6 +19,8 @@ def _exists(cmd):
 def _call(cmd, args):
     """Returns True or False depending on exceptions raised and contents of stderr
     """
+    #print([cmd] + args)
+    _dbg(cmd, args)
     p = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         stdout, stderr = p.communicate()
@@ -30,7 +32,14 @@ def _call(cmd, args):
     if stdout.find(": error ".encode("ascii")) < 0 and stdout.find(": fatal error ".encode("ascii")) < 0:
         return True
     return False
-    
+
+def _dbg(cmd, args):
+    """
+    """
+    with open("epic.dbg", 'a') as f:
+        line = "> %s %s\n" % (cmd, " ".join(args))
+        f.write(line)
+
 def _log(timestamp, event, description):
     """
     """
@@ -47,7 +56,7 @@ def _getDepIncludes(package):
        first directory in the UNI-level folder is included.
     """
     args = []
-    for depPath in package.getDepPaths():
+    for depPath in package.getDepPaths() + [package.packPath]:
         args.append("/I" + depPath)
     return args
 
@@ -72,6 +81,7 @@ def _getDepLibs(package, config):
             libName = dep.split(".")[-1] + ".lib"
             libPath = libPaths[ndx] + os.path.sep + libName
             if not os.path.isfile(libPath):
+                print(libPath)
                 missing.append(libName)
             else:
                 args.append(libName)
@@ -93,8 +103,7 @@ def compile(package, config, fromPath, toPath):
     if "defines" in package.settings:
         for k, v in package.settings["defines"].items():
             args += ["/D%s=%s" % (k, v)]
-    if "dependencies" in package.settings:
-        args += _getDepIncludes(package)
+    args += _getDepIncludes(package)
     result = _call("cl", args + [fromPath])
     _, fromFile = os.path.split(fromPath)
     _, toFile = os.path.split(toPath)

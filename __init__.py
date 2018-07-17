@@ -49,12 +49,14 @@ class Package(object):
         return headers
 
     def getSource(self):
-        """Returns list of absolute paths to all .CPP files (that don't begin
-           with "main_" or "test_") in the package.
+        """Returns list of absolute paths to all .C/.CPP files (that don't
+           begin with "main_" or "test_") in the package.
         """
         source = []
         for fileName in os.listdir(self.packPath):
-            if fileName.lower().endswith(".cpp") and not fileName.lower().startswith("main_") and not fileName.lower().startswith("test_") and not fileName.lower() == "main.cpp":
+            ending = fileName.lower().endswith(".cpp") or fileName.lower().endswith(".c")
+            excluded = fileName.lower().startswith("main_") or fileName.lower().startswith("test_") or fileName.lower().startswith("main.") or fileName.lower().startswith("test.")
+            if ending and not excluded:
                 source.append(self.packPath + os.path.sep + fileName)
         return source
 
@@ -64,11 +66,10 @@ class Package(object):
         """
         mains = []
         for fileName in os.listdir(self.packPath):
-            if fileName.lower().endswith(".cpp") and fileName.lower().startswith("main_"):
+            ending = fileName.lower().endswith(".cpp") or fileName.lower().endswith(".c")
+            mained = fileName.lower().startswith("main_") or fileName.lower().startswith("main.")
+            if ending and mained:
                 mains.append(self.packPath + os.path.sep + fileName)
-        mainPath = self.packPath + os.path.sep + "main.cpp"
-        if os.path.isfile(mainPath):
-            mains.append(mainPath)
         return mains
 
     def getTests(self):
@@ -77,7 +78,9 @@ class Package(object):
         """
         tests = []
         for fileName in os.listdir(self.packPath):
-            if fileName.lower().endswith(".cpp") and fileName.lower().startswith("test_"):
+            ending = fileName.lower().endswith(".cpp") or fileName.lower().endswith(".c")
+            tested = fileName.lower().startswith("test_") or fileName.lower().startswith("test.")
+            if ending and tested:
                 tests.append(self.packPath + os.path.sep + fileName)
         return tests
 
@@ -132,10 +135,10 @@ class Package(object):
            Currently ignores semver constraints and only includes the first
            subfolder within the UNI directory.
         """
-        if "dependencies" not in self.settings:
-            return []
-        elr = os.path.abspath(os.environ["EPIC_LOCAL_REPO"])
         depPaths = []
+        if "dependencies" not in self.settings:
+            return depPaths
+        elr = os.path.abspath(os.environ["EPIC_LOCAL_REPO"])
         for dep, _ in self.settings["dependencies"].items():
             uniPath = elr + os.path.sep + dep
             depPath = None
@@ -161,6 +164,8 @@ def build(package):
     """
     """
     package.assertDependencies()
+    if os.path.isfile("epic.dbg"):
+        os.remove("epic.dbg")
     config = Config()
     builder = getBuilder()
     sources = package.getSource()
