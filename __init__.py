@@ -6,7 +6,7 @@ import re
 import sys
 import json
 import shutil
-from epic import msvc
+from epic import builders, ides
 
 class Config(object):
     """
@@ -152,14 +152,6 @@ class Package(object):
             depPaths.append(depPath)
         return depPaths
 
-def getBuilder():
-    """
-    """
-    if msvc.exists():
-        return msvc
-    else:
-        raise Exception("No supported builders could be resolved")
-
 def build(package):
     """
     """
@@ -167,7 +159,7 @@ def build(package):
     if os.path.isfile("epic.dbg"):
         os.remove("epic.dbg")
     config = Config()
-    builder = getBuilder()
+    builder = builders.getBuilder()
     sources = package.getSource()
     mains = package.getMains()
     tests = package.getTests()
@@ -201,12 +193,24 @@ def clean(package):
     shutil.rmtree(package.packPath + os.path.sep + 'lib')
     shutil.rmtree(package.packPath + os.path.sep + 'obj')
 
+def ide(package):
+    """Exports a package to a supported IDE project format
+    """
+    ide = ides.getIde()
+    name = ide.__name__.split('.')[-1]
+    idePath = package.packPath + os.path.sep + name
+    if os.path.isdir(idePath):
+        shutil.rmtree(idePath)
+    ide.export(package, idePath)
+
 def main(action, target):
     """
     """
     p = Package(target)
     if action == 'build':
         build(p)
+    elif action == 'ide':
+        ide(p)
     elif action == 'clean':
         clean(p)
     else:
