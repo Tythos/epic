@@ -1,0 +1,10 @@
+ * VC.db might contain startup and other solution-level information about project relationships (build dependencies?)
+ * vcxproj.filters will need to be written by projects to map specific include files to source/header filters, IN ADDITION TO item group includes from .vcxproj
+
+fundamental top-level vcxproj objects include:
+ * <import ... "Cpp.targets", "Default.props", and "Cpp.props"/>
+ * <itemgroup/>, including <clcompile/> and <projectconfigurations/>
+ * <itemdefinitiongroup/>, including <link><additionaldependencies> (<clcompile/> appears to be optional) for each 4 configurations
+ * <propertygroup/>, including <usedebuglibraries/>, <platformtoolset/>, <includepath/> and <librarypath/> for each 4 configurations
+ * <propertygroup/> for globals, including <projectguid/> 
+
