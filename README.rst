@@ -1,67 +1,74 @@
-Excellent Packages In C++
-=========================
+EPIC
+====
 
-EPIC is a bare-bones cross-platform C++ package building tool. It assumes a
-targeted package folder has a flat collection of .H and .CPP files, in which
-tests begin with "test_" and entry points begin with "main_".
+Extraordinary Packages in C/C++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+EPIC is a useful tool for organizing both the build processes and dependencies for
+your cross-platform C/C++ packages. It works with multiple build tools, using
+familiar paradigms and a transparent, customizable build graph.
+
+Initialize
+----------
+
+Once you've installed EPIC (making sure the folder is in your PATH and PYTHONPATH
+enviornmental variables), browse to a folder that contains some C/C++ code you'd
+like to create a package for. Then, type the following command:
+
+ > epic init
+
+This will automatically create two files:
+
+#. A "build_graph.csv" table, which defines edges of the build graph for various
+   operations (compiling .CPP source, archiving non-main objects, linking main
+   objects). Additional operations will be implemented in the future, but this
+   build graph can be customized for your particular project needs once created.
+
+#. A "epic_package.json" file, which contains default package values for a UNI
+   (universal namespace identifier), SemVer (semantic versioning numbers), and
+   dependencies (an empty Array).
 
 Building
 --------
 
-The "epic build" command will:
- * Compile all .CPP into object files
- * Archive all non-test, non-main object files into a static library
- * Link all test and main object files against that static library to produce
-   binary executables
+Once you've inspected (and customized, if necessary) the build graph defined in
+*build_graph.csv*, you can run the following command from your package folder:
+
+ > epic build
+
+This will back out each operation from the build graph, performing them when it
+detects changes have been made (or when the build artifact has not yet been
+generated). Right now, operations are mapped to MSVC (Microsoft Visual Studio)
+command-line invocations, but these are set up to be customizable. Future releases
+will also support the LLVM/Clang and GCC toolchains.
+
+In the default build graph, final artifacts will include:
+
+* .EXE programs for all "main_*.cpp" source files
+
+* .LIB static libraries that archive all non-main ".cpp" source files
+
+Future releases may also support dynamic library generation, but of course this
+will be a little bit more involved because of the platform-specific considerations.
 
 Cleaning
 --------
 
-The "epic clean" command will delete all contents of the following folders:
- * bin
- * lib
- * obj
+From the command line, you can clean up all intermediate build products by running
+the following comamnd from your package folder:
 
-Configuration
--------------
+ > epic clean
 
-Customized build options can be specified within a *package.json* file. At the
-moment, this include support for pre-processing "#DEFINE [key]=[value]" macros
-in a "define" object. Future options may include traditional package attribution
-(author, etc) and conditional parameters for specific builds (architectures,
-configurations).
+You can also include an optional "--all" flag; in that case, all final build
+products (.EXE and .LIB files) will be removed, as well.
 
-Metadata uniquely identifying the package is *not* included in the package.json
-file; instead:
- * The UNI is specified by the second-topmost folder name
- * The semantic version is specified by the topmost folder name
- * Source repository information is specified by the Git config data
+Future Features
+---------------
 
-Other fields included in package.json include:
- * *dependencies*, an object listing UNI and semver constriants for each package
-   dependency as key-value pairs
- * *summary*, a single-sentance
+The immediate, and most daunting, task is to determine how dependencies are
+identified, resolved, and built against. There are some initial thoughts in the
+*dep notes.txt* file. These will primarily leverage the contents of the
+*epic_package.json* file and an environmental variable (*EPIC_REPO*) that
+identifies the path in which EPIC package folders are stored on a particular
+system.
 
-Additional package information can include, at the top level of the package:
- * A *.gitignore* file
- * A *README.rst* file (outlining the package purpose and contents; specific
-   documentation should be integrated into source files for extraction and
-   publishing by a tool like Doxygen)
- * A *LICENSE* file
-
-Folders
--------
-
-EPIC packages must be contained in folders with the following sequence:
- * Top-level folder name must be the semantic version of the package
- * Second-to-top-level folder name must be the UNI of the package
-
-For example, a package with the UNI "edu.hmc.eng.utils" and semantic version
-1.2.3 must be located in "edu.hmc.eng.utils/1.2.3".
-
-EPIC assumes all source and header files are stored at the top level of the
-package (adjacent to *package.json*, etc.). This makes it easy to start
-building an existing batch of source code as a package. However, source files
-and headers within subfolders can still be referenced from #include directives;
-they will simply not be directly compiled or integrated into the static
-library when the *build* action is invoked.

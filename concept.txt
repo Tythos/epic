@@ -1,0 +1,21 @@
+/
+	.git/
+	[bin]/
+		[32|64]/
+			[debug/release]/
+				[exes]
+				[tests]
+	[doc]/
+	[lib]/
+	*.h
+	*.cpp
+	package.json
+
+> epic docs
+> epic header
+> epic libs
+> epic tests arch=32 config=debug
+> epic exes arch=32 config=debug
+> epic all
+> epic clean
+> epic init

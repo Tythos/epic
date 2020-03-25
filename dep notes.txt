@@ -1,0 +1,15 @@
+to leverage a dependency, we:
+* resolve the location of the package
+* build the package if necessary
+* include the package directory for Include headers
+* link against the package static library
+
+a system set of epic packages is located in EPIC_REPO
+each package folder has a build_graph.csv and a package.json
+the package.json indicates the UNI, semver, and dependencies
+dependencies are defined as UNIs and semver constraints
+
+to resolve a dependency location
+* EPIC_REPO subfolders are searched
+* package.json contents are checked for matching UNIs and semvers
+* the location of the most recent matching package is returned
