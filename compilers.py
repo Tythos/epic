@@ -3,9 +3,9 @@
 
 import os
 import shutil
-from epic import operator
+from epic import actors
 
-class MsvcCl(operator.Operator):
+class MsvcCl(actors.Actor):
     """
     """
 
@@ -17,13 +17,13 @@ class MsvcCl(operator.Operator):
     def execute(self, inputs, output):
         """
         """
-        args = ["cl", "/c", "/EHsc", "/nologo", inputs[0]] + self.options
+        args = ["cl", "/c", "/EHsc", "/nologo", "/Fo:%s" % output, inputs[0]] + self.options
         self.runSubProc(args)
         extless, ext = os.path.splitext(inputs[0])
         initout = extless + ".obj" # what was generated (/OUT: is deprecated)
-        shutil.move(initout, output)
+        #shutil.move(initout, output)
 
-class LlvmClangpp(operator.Operator):
+class LlvmClangpp(actors.Actor):
     """
     """
 

@@ -1,0 +1,6 @@
+from,action,to
+Person.cpp,compile,Person.obj
+Person.obj,archive,Person.lib
+Person.obj,link,main.exe
+main.obj,link,main.exe
+main.cpp,compile,main.obj

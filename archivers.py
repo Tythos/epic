@@ -1,9 +1,9 @@
 """
 """
 
-from epic import operator
+from epic import actors
 
-class MsvcLib(operator.Operator):
+class MsvcLib(actors.Actor):
     """
     """
 
@@ -18,7 +18,7 @@ class MsvcLib(operator.Operator):
         args = ["lib", "/OUT:%s" % output, "/nologo"] + self.options + inputs
         self.runSubProc(args)
         
-class LlvmLib(operator.Operator):
+class LlvmLib(actors.Actor):
     """
     """
 

@@ -1,9 +1,9 @@
 """
 """
 
-from epic import operator
+from epic import actors
 
-class MsvcLink(operator.Operator):
+class MsvcLink(actors.Actor):
     """
     """
 
