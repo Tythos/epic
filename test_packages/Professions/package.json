@@ -1,0 +1,8 @@
+{
+    "url": "github.com/tythos/professions",
+    "semver": "0.1.2",
+    "license": "mit",
+    "dependencies": {
+        "github.com/tythos/person": "0.1"
+    }
+}
