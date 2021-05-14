@@ -1,6 +1,6 @@
 from,action,to
-Person.cpp,compile,Person.obj
-Person.obj,archive,Person.lib
-Person.obj,link,main.exe
-main.obj,link,main.exe
-main.cpp,compile,main.obj
+main.cpp,compile,obj/main.obj
+Person.cpp,compile,obj/Person.obj
+obj/Person.obj,archive,lib/Person.lib
+lib/Person.lib,link,bin/Person.exe
+obj/main.obj,link,bin/Person.exe

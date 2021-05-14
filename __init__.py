@@ -2,12 +2,12 @@
 """
 
 import os
-import re
 import csv
 import sys
-import json
 import datetime
-from epic import params, compilers, linkers, archivers
+from epic import compilers, linkers, archivers
+
+EPIC_PATH, _ = os.path.split(os.path.abspath(__file__))
 
 class BuildGraph(object):
     """Encapsulates a set of vertices and edges determined by a build_graph.csv
@@ -106,7 +106,8 @@ class BuildGraph(object):
            determined by those with both "to" and "from edge connections.
         """
         intermediates = []
-        for v in self.vertices:
+        vertices = self.getVertices()
+        for v in vertices:
             froms = [e for e in self.edges if e["from"] == v]
             tos = [e for e in self.edges if e["to"] == v]
             if 0 < len(tos) and 0 < len(froms):
@@ -162,6 +163,11 @@ class BuildGraph(object):
         if isExists:
             toDt = datetime.datetime.fromtimestamp(os.path.getmtime(fullPath))
             isRebuildNeeded = any([toDt < dt for dt in fromDts])
+        else:
+            # create folder if it also doesn't exist
+            toPath, _ = os.path.split(fullPath)
+            if not os.path.isdir(toPath):
+                os.makedirs(toPath)
         if isRebuildNeeded:
             self.buildVertex(v, ei)
 
@@ -187,24 +193,24 @@ class BuildGraph(object):
             operator = self.operators["archiver"]()
         else:
             raise Exception("Unsupported operation '%s' to generate artifact '%s'" % (operation, v))
-        # adjust paths of verticies to project root
+        # adjust paths of vertices to project root
         operator.execute([
             os.path.abspath(self.getProjectPath() + "/" + i) for i in vi
         ], os.path.abspath(self.getProjectPath() + "/" + v)) # ["from"], "to"
 
     def autopopCompiles(self):
         """Automatically adds "compile" actions to the build graph for every
-           .C or .CPP file located in the "src/" folder under the build graph.
+           .C or .CPP file located in the root folder with the build graph.
         """
         bgPath, _ = os.path.split(self.buildGraphPath)
-        srcPath = os.path.abspath(bgPath + "/src")
+        srcPath = os.path.abspath(bgPath)
         for filename in os.listdir(srcPath):
             if filename.endswith(".c") or filename.endswith(".cpp"):
                 fileRoot, _ = os.path.splitext(filename)
                 self.edges.append({
-                    "from": "./src/%s" % filename,
+                    "from": "%s" % filename,
                     "action": "compile",
-                    "to": "./obj/%s.obj" % fileRoot
+                    "to": "obj/%s.obj" % fileRoot
                 })
 
     def getProjectName(self):
@@ -223,7 +229,7 @@ class BuildGraph(object):
            static library will be named after the project.
         """
         vertices = self.getVertices()
-        archPath = "./lib/%s.lib" % self.getProjectName()
+        archPath = "lib/%s.lib" % self.getProjectName()
         for v in vertices:
             # v is a string that may contain path information
             _, filename = os.path.split(v)
@@ -250,7 +256,7 @@ class BuildGraph(object):
              "computeStuff.exe" executable.
         """
         vertices = self.getVertices()
-        archPath = "./lib/%s.lib" % self.getProjectName()
+        archPath = "lib/%s.lib" % self.getProjectName()
         for v in vertices:
             _, filename = os.path.split(v)
             if filename.endswith(".obj"):
@@ -260,7 +266,7 @@ class BuildGraph(object):
                         fileRoot = filename.split("_", 1)[1]
                     if filename.startswith("main"):
                         fileRoot = self.getProjectName()
-                    binPath = "./bin/%s.exe" % fileRoot
+                    binPath = "bin/%s.exe" % fileRoot
                     self.edges.append({
                         "from": archPath,
                         "action": "link",
@@ -276,56 +282,69 @@ def build(root):
     """Initializes a recursive traversal of the build graph, walking backwards
        from each final vertex.
     """
-    bgPath = os.path.abspath(root + "/build_graph.csv")
-    bg = BuildGraph(bgPath)
+    bg = BuildGraph(root)
     finals = bg.getFinalVertices()
     for v in finals:
         bg.traverse(v)
 
-def clean(root, rmAll=False):
-    """Deletes all intermediate build products from the package folder. If
-       rmAll is True, also removes all final build products.
+def clean(root):
+    """Deletes all intermediate build products from the package folder.
     """
     bg = BuildGraph(root)
     vi = bg.getIntermediateVertices()
+    allFolders = []
     for v in vi:
-        fullPath = bg.root + "/%s" % v
+        fullPath = bg.getProjectPath() + "/%s" % v
+        fullFolder, _ = os.path.split(fullPath)
+        allFolders.append(fullFolder)
         if os.path.isfile(fullPath):
             os.remove(fullPath)
-    if rmAll:
-        vi = bg.getFinalVertices()
-        for v in vi:
-            fullPath = bg.root + "/%s" % v
-            if os.path.isfile(fullPath):
-                os.remove(fullPath)
+    vf = bg.getFinalVertices()
+    for v in vf:
+        fullPath = bg.getProjectPath() + "/%s" % v
+        fullFolder, _ = os.path.split(fullPath)
+        allFolders.append(fullFolder)
+        if os.path.isfile(fullPath):
+            os.remove(fullPath)
+    # finally, check set of product folders to see if it is safe to remove them
+    productFolders = set(allFolders)
+    for productFolder in productFolders:
+        contents = os.listdir(productFolder)
+        if len(contents) == 0:
+            os.rmdir(os.path.abspath(productFolder))
 
 def init(root):
     """Creates a new build_graph.csv table in the given folder. (An error is
        thrown if one already exists.) Auto-populates actions using the
        "auto-pop" algorithms defined in corresponds BuildGraph methods.
     """
-    bgPath = os.path.abspath(root) + "/build_graph.csv"
-    bg = BuildGraph(bgPath)
+    bg = BuildGraph(root)
     bg.autopopCompiles()
     bg.autopopArchives()
     bg.autopopLinks()
     bg.save()
-    
-def main(root, action, options=[]):
+
+def help():
+    """
+    """
+    with open(EPIC_PATH + "/README.rst", 'r') as f:
+        print(f.read())
+
+def main(action="help", root=os.getcwd()):
     """Performs a specific action against a package root. A list of optional
        action-specific arguments can also be provided.
     """
+    root = os.path.abspath(root + "/build_graph.csv")
     if action == "build":
         build(root)
     elif action == "clean":
-        clean(root, "--all" in options)
+        clean(root)
     elif action == "init":
         init(root)
+    elif action == "help":
+        help()
     else:
         raise Exception("Unsupported action '%s'" % action)
 
 if __name__ == "__main__":
-    p = params.Params(sys.argv)
-    root = p.get("root")
-    action = p.get("action")
-    main(root, action, p.argv)
+    main(*sys.argv[1:])
